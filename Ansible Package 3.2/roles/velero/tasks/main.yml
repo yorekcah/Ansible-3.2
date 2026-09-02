@@ -1,0 +1,49 @@
+---
+- name: Add Velero Helm repo (online)
+  ansible.builtin.shell: helm repo add vmware-tanzu https://vmware-tanzu.github.io/helm-charts 2>/dev/null || true && helm repo update
+  environment:
+    KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+  when: not offline_install | bool
+
+- name: Create Velero namespace
+  ansible.builtin.shell: kubectl create namespace velero --dry-run=client -o yaml | kubectl apply -f -
+  environment:
+    KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+
+- name: Template Velero credentials
+  ansible.builtin.template:
+    src: cloud-credentials.j2
+    dest: /tmp/cloud-credentials
+
+- name: Create Velero credentials Secret
+  ansible.builtin.shell: kubectl create secret generic cloud-credentials --from-file cloud=/tmp/cloud-credentials -n velero --dry-run=client -o yaml | kubectl apply -f -
+  environment:
+    KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+
+- name: Install Velero
+  ansible.builtin.command: >
+    helm upgrade --install velero
+    {{ (local_charts_dir ~ '/velero-' ~ velero_chart_version ~ '.tgz') if offline_install else 'vmware-tanzu/velero' }}
+    --namespace velero
+    --version {{ velero_chart_version }}
+    --set configuration.backupStorageLocation[0].name=default
+    --set configuration.backupStorageLocation[0].provider=aws
+    --set configuration.backupStorageLocation[0].bucket={{ velero_bucket }}
+    --set configuration.backupStorageLocation[0].config.region={{ velero_region }}
+    --set configuration.backupStorageLocation[0].config.s3ForcePathStyle=true
+    --set configuration.backupStorageLocation[0].config.s3Url={{ velero_s3_url }}
+    --set credentials.existingSecret=cloud-credentials
+    --set deployNodeAgent=true
+    --set initContainers[0].name=velero-plugin-for-aws
+    --set initContainers[0].image=docker.io/velero/velero-plugin-for-aws:{{ velero_plugin_version }}
+    --set initContainers[0].volumeMounts[0].mountPath=/target
+    --set initContainers[0].volumeMounts[0].name=plugins
+    --set image.repository=docker.io/velero/velero
+    --set image.tag={{ velero_version }}
+  environment:
+    KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+
+- name: Wait for Velero
+  ansible.builtin.command: kubectl rollout status deployment velero -n velero --timeout=300s
+  environment:
+    KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"

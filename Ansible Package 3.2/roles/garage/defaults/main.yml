@@ -1,0 +1,8 @@
+---
+garage_version: "v2.3.0"
+garage_image: "docker.io/dxflrs/garage"
+garage_replicas: 1
+garage_storage_size: "20Gi"
+garage_replication_factor: 1
+garage_domain: "garage.airgap.local"
+garage_s3_vip: "10.0.0.101"

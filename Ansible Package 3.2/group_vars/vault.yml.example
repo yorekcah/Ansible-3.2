@@ -1,0 +1,8 @@
+---
+vault_rke2_token: "CHANGE-ME-TO-A-LONG-RANDOM-TOKEN"
+vault_harbor_password: "CHANGE-ME-Harbor"
+vault_gitea_password: "CHANGE-ME-Gitea"
+vault_velero_access: "CHANGE-ME-Velero-Access"
+vault_velero_secret: "CHANGE-ME-Velero-Secret"
+vault_garage_rpc_secret: "CHANGE-ME-Garage-RPC"
+vault_garage_admin_token: "CHANGE-ME-Garage-Admin"

@@ -1,0 +1,4 @@
+---
+istio_version: "1.30.4"
+offline_install: false
+local_charts_dir: /opt/airgap/charts
