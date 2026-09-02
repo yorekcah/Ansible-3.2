@@ -1,4 +1,0 @@
----
-k8sgpt_version: "v0.3.40"
-offline_install: false
-local_artifacts_dir: /opt/airgap/artifacts

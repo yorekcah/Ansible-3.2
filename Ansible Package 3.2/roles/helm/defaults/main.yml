@@ -1,5 +1,0 @@
----
-offline_install: false
-local_artifacts_dir: /opt/airgap/artifacts
-local_charts_dir: /opt/airgap/charts
-rke2_version: v1.36.3+rke2r1
