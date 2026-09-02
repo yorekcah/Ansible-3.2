@@ -50,7 +50,7 @@ sudo dnf install -y dnf-plugins-core curl tar gzip zstd python3
 Run with a new or empty destination directory. The builder refuses non-empty destinations so removed components cannot survive from an older bundle:
 
 ```bash
-chmod +x scripts/prep-offline.sh
+chmod 0755 scripts/*.sh
 ./scripts/prep-offline.sh /opt/airgap-bundle
 ```
 
@@ -77,7 +77,7 @@ Transfer `ansible-package-3.2-rhel9.tar.gz` to the RHEL 9 Ansible controller/jum
 ```bash
 sudo mkdir -p /opt/airgap
 sudo tar -C /opt/airgap -xzf ansible-package-3.2-rhel9.tar.gz
-sudo chmod +x /opt/airgap/scripts/*.sh
+sudo chmod 0755 /opt/airgap/scripts/*.sh
 cd /opt/airgap
 ```
 
@@ -200,13 +200,14 @@ sudo /opt/airgap/scripts/review-rke2-server.sh | tee /tmp/rke2-server-review.log
 
 The script does not read the RKE2 configuration, cluster token, or vault files. It reports RHEL/SELinux RPM state, RKE2 service status and recent logs, cluster nodes and pods, Traefik, services, ingresses, Longhorn storage, and containerd images. Review the collected service logs before sharing them.
 
-Test that a normal Kubernetes image reference resolves without Internet access:
+Test that an image staged by this bundle resolves without Internet access:
 
 ```bash
-sudo /var/lib/rancher/rke2/bin/crictl --runtime-endpoint unix:///run/k3s/containerd/containerd.sock pull docker.io/library/busybox:1.36
+image="$(head -n 1 /opt/airgap/images/images.txt)"
+sudo /var/lib/rancher/rke2/bin/crictl --runtime-endpoint unix:///run/k3s/containerd/containerd.sock pull "$image"
 ```
 
-For a strict air-gap acceptance test, disconnect/block Internet egress and repeat the image pull using an image that exists in Harbor. The pull must succeed without reaching Docker Hub.
+For a strict air-gap acceptance test, disconnect or block Internet egress before running the pull. The image from `images/images.txt` must resolve through the local image store or Harbor without reaching its upstream registry.
 
 ## 9. Security note
 

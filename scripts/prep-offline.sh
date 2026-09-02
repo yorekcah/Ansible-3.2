@@ -35,7 +35,7 @@ for path in inventory group_vars host_vars playbooks roles scripts; do
 done
 cp -a "$PACKAGE_ROOT/collections/." "$DEST/collections/"
 cp -a "$PACKAGE_ROOT/ansible.cfg" "$PACKAGE_ROOT/README.md" "$PACKAGE_ROOT/CHANGELOG.md" "$PACKAGE_ROOT/VERSION" "$DEST/"
-chmod +x "$DEST"/scripts/*.sh
+find "$DEST/scripts" -type f -name '*.sh' -exec chmod 0755 {} +
 
 need_cmd() { command -v "$1" >/dev/null 2>&1 || { echo "ERROR: required command '$1' is missing" >&2; exit 1; }; }
 for c in curl sha256sum helm python3 tar dnf rpm uname; do need_cmd "$c"; done
@@ -179,7 +179,7 @@ render() {
   local tgz
   tgz="$(find "$DEST/charts" -maxdepth 1 -name "${chart}-*.tgz" -print -quit)"
   test -n "$tgz"
-  helm template "$chart" "$tgz" --values "$values" --include-crds > "$DEST/images/rendered/${chart}.yaml"
+  helm template "$chart" "$tgz" --values "$values" --include-crds --skip-tests > "$DEST/images/rendered/${chart}.yaml"
 }
 render metallb "$WORK/values/metallb.yaml"
 render longhorn "$WORK/values/longhorn.yaml"
@@ -198,8 +198,25 @@ for f in "$DEST"/images/rendered/*.yaml; do
     | sed -E "s/^image:[[:space:]]*//; s/^[\"']//; s/[\"',]$//" \
     >> "$DEST/images/images-discovered.txt" || true
 done
-sed '/^$/d;/{{/d;/^sha256:/d' "$DEST/images/images-discovered.txt" \
-  | sort -u > "$DEST/images/images-discovered.clean.txt"
+python3 - "$DEST/images/images-discovered.txt" "$DEST/images/images-discovered.clean.txt" <<'PY'
+import sys
+
+source, destination = sys.argv[1:]
+images = set()
+with open(source, encoding="utf-8") as stream:
+    for line in stream:
+        image = line.strip()
+        if not image or "{{" in image or image.startswith("sha256:"):
+            continue
+        first = image.split("/", 1)[0]
+        if "/" not in image:
+            image = f"docker.io/library/{image}"
+        elif "." not in first and ":" not in first and first != "localhost":
+            image = f"docker.io/{image}"
+        images.add(image)
+with open(destination, "w", encoding="utf-8") as stream:
+    stream.writelines(f"{image}\n" for image in sorted(images))
+PY
 cat "$DEST/images/images-explicit.txt" "$DEST/images/images-discovered.clean.txt" \
   | sed '/^$/d' | sort -u > "$DEST/images/images.txt"
 
