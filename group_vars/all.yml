@@ -1,0 +1,68 @@
+---
+# Ansible Package 3.2 - RHEL 9 / RKE2 air-gap deployment
+offline_install: true
+airgap_registry_url: "harbor.airgap.local"
+airgap_registry_project: "library"
+airgap_registry: "{{ airgap_registry_url }}/{{ airgap_registry_project }}"
+local_artifacts_dir: /opt/airgap/artifacts
+local_charts_dir: /opt/airgap/charts
+local_images_dir: /opt/airgap/images
+local_rpm_dir: /opt/airgap/rpm
+local_collection_dir: /opt/airgap/collections
+local_cert_dir: /opt/airgap/certs
+
+# Air-gap validation / staging
+require_offline_bundle_validation: true
+import_bootstrap_images: true
+bootstrap_images_archive: "{{ local_images_dir }}/bootstrap-images.tar"
+verify_checksums: true
+allow_external_registry_fallback: false
+
+# RHEL 9. Set true only if the connected environment uses subscription-manager.
+register_rhel: false
+
+# RKE2
+rke2_version: v1.36.4+rke2r1
+rke2_cni: canal
+rke2_token: "{{ vault_rke2_token | default('CHANGEME-rke2-cluster-token') }}"
+cluster_cidr: "10.42.0.0/16"
+service_cidr: "10.43.0.0/16"
+cluster_dns: "10.43.0.10"
+
+# MetalLB
+metallb_version: "0.16.1"
+metallb_address_pool:
+  - 10.0.0.100-10.0.0.110
+
+# Longhorn
+longhorn_version: "1.12.1"
+longhorn_default_replicas: 3
+
+# Traefik ingress
+traefik_vip: "10.0.0.100"
+harbor_vip: "10.0.0.102"
+
+# Harbor
+harbor_chart_version: "1.19.2"
+harbor_app_version: "v2.15.2"
+harbor_domain: "harbor.airgap.local"
+harbor_admin_password: "{{ vault_harbor_password | default('CHANGEME-harbor') }}"
+harbor_data_dir: /opt/harbor/data
+
+# Gitea
+gitea_chart_version: "12.7.0"
+gitea_app_version: "1.27.3"
+gitea_domain: "gitea.airgap.local"
+gitea_admin_user: gitea_admin
+gitea_admin_password: "{{ vault_gitea_password | default('CHANGEME-gitea') }}"
+
+# Tools
+k9s_version: "v0.51.0"
+helm_version: "v4.2.4"
+
+# CA / registry TLS
+trust_local_ca: false
+selinux_state: enforcing
+rke2_selinux_version: "0.23"
+rke2_selinux_release: "1"
+local_ca_cert: "{{ local_cert_dir }}/ca.crt"

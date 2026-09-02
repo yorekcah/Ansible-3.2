@@ -1,0 +1,3 @@
+---
+# Jump / bastion host settings
+install_cluster_tools: true

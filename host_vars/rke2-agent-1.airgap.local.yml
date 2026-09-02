@@ -1,0 +1,5 @@
+---
+rke2_node_labels:
+  - node-role.kubernetes.io/worker=true
+  - longhorn-node=yes
+rke2_node_taints: []
