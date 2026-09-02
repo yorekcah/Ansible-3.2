@@ -1,6 +1,6 @@
 # Ansible Package 3.2 — RHEL 9 / RKE2 Air-Gap Deployment
 
-This is a self-contained **RHEL 9 connected-side build -> compressed offline transfer -> disconnected RHEL 9 deployment** package. Run all shell scripts on RHEL 9, not on Windows.
+This is a self-contained **RHEL 9 connected-side build -> compressed offline transfer -> disconnected RHEL 9 deployment** package. Run all shell scripts on RHEL 9.
 
 ## What 3.2 fixes
 
